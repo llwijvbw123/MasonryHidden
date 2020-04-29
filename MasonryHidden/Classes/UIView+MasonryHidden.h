@@ -16,9 +16,11 @@ typedef void(^UIViewMasonryHiddenCallback)(BOOL masonry_hidden);
 @property (nonatomic, assign) BOOL masonry_hidden;
 
 @property (nonatomic, strong) NSMutableSet<MASViewConstraint *> *canHiddenConstraintsSet;
+@property (nonatomic, strong) NSMutableSet<MASViewConstraint *> *canLowConstraintsSet;
 
 @property (nonatomic, copy) UIViewMasonryHiddenCallback masonryHiddenCallback;
 
 - (void)addWillHiddenConstraint:(NSArray <MASConstraint *> *)willHiddenConstraintArray;
+- (void)addWillLowConstraint:(NSArray<MASConstraint *> *)willLowConstraintArray;
 
 @end
