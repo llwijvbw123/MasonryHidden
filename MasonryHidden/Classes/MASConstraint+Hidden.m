@@ -21,4 +21,15 @@
     };
 }
 
+
+
+- (MASConstraint * (^)(UIView *))autoLow{
+    return ^id(UIView *view) {
+        NSParameterAssert(view);
+
+        [view addWillLowConstraint:@[self]];
+
+        return self;
+    };
+}
 @end
