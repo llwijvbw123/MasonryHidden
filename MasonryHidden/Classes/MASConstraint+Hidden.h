@@ -11,5 +11,6 @@
 @interface MASConstraint (Hidden)
 
 - (MASConstraint * (^)(UIView *))autoHidden;
+- (MASConstraint * (^)(UIView *))autoLow;
 
 @end
