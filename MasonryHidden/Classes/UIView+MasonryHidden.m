@@ -10,9 +10,10 @@
 #import <objc/runtime.h>
 
 static char *NSLayoutConstraintOriginConstant = "NSLayoutConstraintOriginConstant";
+static char *NSLayoutConstraintOriginPriority = "NSLayoutConstraintOriginPriority";
 static char *UIViewCanHiddenConstraintsSet = "UIViewCanHiddenConstraintsSet";
+static char *UIViewCanLowConstraintsSet = "UIViewCanLowConstraintsSet";
 static char *MasonryHidden = "MasonryHidden";
-static char *MasonryHiddenCallback = "MasonryHiddenCallback";
 
 @implementation NSLayoutConstraint (OriginConstant)
 
@@ -22,6 +23,13 @@ static char *MasonryHiddenCallback = "MasonryHiddenCallback";
 
 - (CGFloat)getOriginConstant {
     return [objc_getAssociatedObject(self, NSLayoutConstraintOriginConstant) floatValue];
+}
+- (void)setOriginPriority:(CGFloat)originConstant {
+    objc_setAssociatedObject(self, NSLayoutConstraintOriginPriority, @(originConstant), OBJC_ASSOCIATION_RETAIN);
+}
+
+- (CGFloat)getOriginPriority {
+    return [objc_getAssociatedObject(self, NSLayoutConstraintOriginPriority) floatValue];
 }
 
 @end
@@ -42,6 +50,20 @@ static char *MasonryHiddenCallback = "MasonryHiddenCallback";
     objc_setAssociatedObject(self, UIViewCanHiddenConstraintsSet, canHiddenConstraintsSet, OBJC_ASSOCIATION_RETAIN);
 }
 
+- (NSMutableSet *)canLowConstraintsSet
+{
+    NSMutableSet *constraintsSet = objc_getAssociatedObject(self, UIViewCanLowConstraintsSet);
+    if (!constraintsSet) {
+        constraintsSet = [NSMutableSet set];
+        objc_setAssociatedObject(self, UIViewCanLowConstraintsSet, constraintsSet, OBJC_ASSOCIATION_RETAIN);
+    }
+    return constraintsSet;
+}
+
+- (void)setCanLowConstraintsSet:(NSMutableSet *)canLowConstraintsSet {
+    objc_setAssociatedObject(self, UIViewCanLowConstraintsSet, canLowConstraintsSet, OBJC_ASSOCIATION_RETAIN);
+}
+
 - (BOOL)masonry_hidden {
     return [objc_getAssociatedObject(self, MasonryHidden) boolValue];
 }
@@ -53,6 +75,7 @@ static char *MasonryHiddenCallback = "MasonryHiddenCallback";
     }
     
     NSMutableSet *set = self.canHiddenConstraintsSet;
+    NSMutableSet *setLow = self.canLowConstraintsSet;
 
     if (masonry_hidden) {
         [set enumerateObjectsUsingBlock:^(MASViewConstraint * _Nonnull constraint, BOOL * _Nonnull stop) {
@@ -64,6 +87,15 @@ static char *MasonryHiddenCallback = "MasonryHiddenCallback";
             }
             
         }];
+        [setLow enumerateObjectsUsingBlock:^(MASViewConstraint * _Nonnull constraint, BOOL * _Nonnull stop) {
+
+            MASLayoutConstraint *originConstraint = [constraint valueForKey:@"layoutConstraint"];
+            if (originConstraint) {
+                [originConstraint setOriginPriority:originConstraint.priority];
+                originConstraint.priority = 1;
+            }
+
+        }];
     } else {
         [set enumerateObjectsUsingBlock:^(MASViewConstraint * _Nonnull constraint, BOOL * _Nonnull stop) {
             MASLayoutConstraint *originConstraint = [constraint valueForKey:@"layoutConstraint"];
@@ -71,21 +103,15 @@ static char *MasonryHiddenCallback = "MasonryHiddenCallback";
                 originConstraint.constant = [originConstraint getOriginConstant] ? : 0.0;
             }
         }];
+        [setLow enumerateObjectsUsingBlock:^(MASViewConstraint * _Nonnull constraint, BOOL * _Nonnull stop) {
+            MASLayoutConstraint *originConstraint = [constraint valueForKey:@"layoutConstraint"];
+            if (originConstraint) {
+                originConstraint.priority = [originConstraint getOriginPriority] ? : UILayoutPriorityDefaultLow;
+            }
+        }];
     }
     
     objc_setAssociatedObject(self, MasonryHidden, @(masonry_hidden), OBJC_ASSOCIATION_ASSIGN);
-    
-    if (self.masonryHiddenCallback) {
-        self.masonryHiddenCallback(masonry_hidden);
-    }
-}
-
-- (UIViewMasonryHiddenCallback)masonryHiddenCallback {
-    return objc_getAssociatedObject(self, MasonryHiddenCallback);
-}
-
-- (void)setMasonryHiddenCallback:(UIViewMasonryHiddenCallback)masonryHiddenCallback {
-    objc_setAssociatedObject(self, MasonryHiddenCallback, masonryHiddenCallback, OBJC_ASSOCIATION_COPY);
 }
 
 - (void)addWillHiddenConstraint:(NSArray<MASConstraint *> *)willHiddenConstraintArray {
@@ -100,6 +126,19 @@ static char *MasonryHiddenCallback = "MasonryHiddenCallback";
         
     }];
     
+}
+- (void)addWillLowConstraint:(NSArray<MASConstraint *> *)willLowConstraintArray {
+
+    NSMutableSet *set = self.canLowConstraintsSet;
+
+    [willLowConstraintArray enumerateObjectsUsingBlock:^(MASConstraint * _Nonnull constraint, NSUInteger idx, BOOL * _Nonnull stop) {
+
+        if ([constraint isKindOfClass:[MASViewConstraint class]]) {
+            [set addObject:constraint];
+        }
+
+    }];
+
 }
 
 /*
