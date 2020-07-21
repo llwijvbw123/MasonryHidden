@@ -9,8 +9,11 @@
 #import <Masonry/MASConstraint.h>
 
 @interface MASConstraint (Hidden)
-
 - (MASConstraint * (^)(UIView *))autoHidden;
+/**
+ * 约束优先级必须小于1000 大于1
+ * @return
+ */
 - (MASConstraint * (^)(UIView *))autoLow;
 
 @end
