@@ -92,7 +92,7 @@ static char *MasonryHidden = "MasonryHidden";
             MASLayoutConstraint *originConstraint = [constraint valueForKey:@"layoutConstraint"];
             if (originConstraint) {
                 [originConstraint setOriginPriority:originConstraint.priority];
-                originConstraint.priority = 1;
+                originConstraint.priority = UILayoutPriorityDefaultLow;
             }
 
         }];
